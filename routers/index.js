@@ -13,6 +13,33 @@ router.get("/", function (req, res) {
  * Begin: User table: POST, GET
  */
 
+router.get("/store", async (req, res, next) => {
+  console.log(req.query);
+  if (req.query.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const pool = await poolPromise;
+      const queryResult = await pool
+        .request()
+        .query(
+          "Select s.StoreId, s.StoreName, s.StoreAddress From Store s"
+        );
+      if (queryResult.recordset.length > 0) {
+        res.end(
+          JSON.stringify({ success: true, result: queryResult.recordset })
+        );
+      } else {
+        res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+});
+
+
 router.get("/users", async (req, res, next) => {
   console.log(req.query);
   if (req.query.key != API_KEY) {

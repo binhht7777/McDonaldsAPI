@@ -2,9 +2,10 @@ const sql = require("mssql");
 const { DefaultDeserializer } = require("v8");
 
 const config = {
-  user: "quynhlm",
-  password: "123@Qweasd",
-  server: "quinnie.database.windows.net", // You can use 'localhost\\instance' to connect to named instance
+  user: "admin",
+  password: "123@Admin",
+  server: "mssql-47790-0.cloudclusters.net",
+  port: 19448, // You can use 'localhost\\instance' to connect to named instance
   database: "mcdonald",
   trustServerCertificate: true,
   encrypt: true,
