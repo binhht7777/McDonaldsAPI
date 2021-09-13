@@ -13,6 +13,8 @@ const {
   getFavorite,
   createOrder,
   createOrderDetail,
+  createPaymentIntent,
+  cancelPaymentIntent
 } = require("../controllers/index.contronller");
 
 router.get("/users", getUsers);
@@ -35,6 +37,8 @@ router.post("/createorder", createOrder);
 
 router.post("/createorderdetail", createOrderDetail);
 
+router.post("/create-payment-intent", createPaymentIntent);
 
+router.delete("/payment-intent/:id/cancel", cancelPaymentIntent);
 
 module.exports = router;
