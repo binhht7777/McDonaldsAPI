@@ -14,7 +14,9 @@ const {
   createOrder,
   createOrderDetail,
   createPaymentIntent,
-  cancelPaymentIntent
+  cancelPaymentIntent,
+  createFavorite,
+  deleteFavorite,
 } = require("../controllers/index.contronller");
 
 router.get("/users", getUsers);
@@ -32,6 +34,10 @@ router.get("/category", getCategory);
 router.get("/foodbycategory", getFoodByCategory);
 
 router.get("/favorite", getFavorite);
+
+router.post("/favorite", createFavorite);
+
+router.delete("/favorite", deleteFavorite);
 
 router.post("/createorder", createOrder);
 

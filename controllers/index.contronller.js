@@ -199,12 +199,86 @@ const getFavorite = async (req, res) => {
   } else {
     try {
       const response = await pool.query(
-        "Select f.FoodId, f.FoodName, f.FoodImg, f.Count From Favorite f"
+        "Select f.FoodId, f.FoodName, f.FoodImg, f.Count From Favorite f Where f.Count >=10 "
       );
       if (response.rows.length > 0) {
         res.end(JSON.stringify({ success: true, result: response.rows }));
       } else {
         res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
+const createFavorite = async (req, res) => {
+  if (req.body.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const { foodId, foodName, foodImg, count } = req.body;
+      var countFav = 0;
+
+      // kiem tra xem co ton tai favorite khong
+
+      const response = await pool.query(
+        "Select f.Count From Favorite f Where f.FoodId = $1",
+        [foodId]
+      );
+      console.log(response.rows);
+      if (response.rows != "") {
+        console.log("2------------");
+        if (parseInt(response.rows[0]["count"]) > 0) {
+          countFav = parseInt(response.rows[0]["count"]) + count;
+          console.log(countFav);
+          const response1 = await pool.query(
+            "Update Favorite Set Count = $1 Where foodId = $2",
+            [countFav, foodId]
+          );
+          if (response1.rows != null) {
+            res.send(JSON.stringify({ success: true, message: "Success" }));
+          }
+        }
+      } else {
+        console.log("Insert Favorite");
+        const response2 = await pool.query(
+          "Insert Into Favorite(FoodId, FoodName, FoodImg, Count) Values($1, $2, $3, $4)",
+          [foodId, foodName, foodImg, count]
+        );
+        if (response2.rows != null) {
+          res.send(JSON.stringify({ success: true, message: "Success" }));
+        }
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
+const deleteFavorite = async (req, res) => {
+  if (req.body.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const { foodId, count } = req.body;
+      const response = await pool.query(
+        "Select f.Count From Favorite f Where f.FoodId = $1",
+        [foodId]
+      );
+      if (response.rows != null) {
+        console.log(response.rows);
+        countFav = parseInt(response.rows[0]["count"]) - count;
+      }
+
+      const response1 = await pool.query(
+        "Update Favorite Set Count = $1 Where foodId = $2",
+        [countFav, foodId]
+      );
+      if (response1.rows != null) {
+        res.send(JSON.stringify({ success: true, message: "Success" }));
       }
     } catch (err) {
       res.status(500);
@@ -357,4 +431,6 @@ module.exports = {
   createOrderDetail,
   createPaymentIntent,
   cancelPaymentIntent,
+  createFavorite,
+  deleteFavorite,
 };
