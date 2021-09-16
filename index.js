@@ -1,5 +1,5 @@
 // npm install -g nodemon
-const PORT = 3000;
+// const PORT = 3000;
 
 const express = require("express");
 const app = express();
@@ -13,12 +13,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(require("./routers/index"));
 
 
-app.listen(PORT, () => {
-  console.log("McDonalds API Running...");
-});
-
-// heroku
-// app.listen(process.env.PORT, () => {
+// app.listen(PORT, () => {
 //   console.log("McDonalds API Running...");
 // });
+
+// heroku
+app.listen(process.env.PORT, () => {
+  console.log("McDonalds API Running...");
+});
 
