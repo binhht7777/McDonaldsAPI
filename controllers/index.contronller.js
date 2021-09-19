@@ -15,7 +15,49 @@ const pool = new Pool({
   trustedConnection: true,
 });
 
+var crypto = require("crypto"), algorithm = "sha-256-ctr", keyHascode = "d6F3Efeq";
+
+function encrypt(text) {
+  var cipher = crypto.createCipher(algorithm, password);
+  var crypted = cipher.update(text, "utf8", "hex");
+  crypted += cipher.final("hex");
+  return crypted;
+}
+
+function decrypt(text) {
+  var decipher = crypto.createDecipher(algorithm, password);
+  var dec = decipher.update(text, "hex", "utf8");
+  dec += decipher.final("utf8");
+  return dec;
+}
+
+const encryptPass = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  if (req.body.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      console.log("encrypt password");
+      const passWord = req.body.passWord;
+      const passWordHash = crypto
+        .createHmac("sha256", keyHascode)
+        .update(passWord)
+        .digest("hex");
+
+      if (passWordHash != "") {
+        res.end(JSON.stringify({ success: true, result: passWordHash }));
+      } else {
+        res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
 const getUsers = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -36,6 +78,7 @@ const getUsers = async (req, res) => {
 };
 
 const getUserByImei = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -59,17 +102,23 @@ const getUserByImei = async (req, res) => {
 };
 
 const getUserByPhone = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
     try {
       var userPhone = req.query.userPhone;
+      var passWord = req.query.passWord;
+      var passWordHash = crypto
+        .createHmac("sha256", keyHascode)
+        .update(passWord)
+        .digest("hex");
+      console.log(passWordHash);
       const response = await pool.query(
-        "Select u.Imei, u.UserPhone, u.Name, u.Address, u.IsCustomerYN From Users u Where u.UserPhone = $1",
-        [userPhone]
+        "Select u.Imei, u.UserPhone, u.Name, u.Address, u.IsCustomerYN From Users u Where u.UserPhone = $1 And u.Password = $2",
+        [userPhone, passWordHash]
       );
       if (response.rows.length > 0) {
-        console.log(response.rows);
         res.end(JSON.stringify({ success: true, result: response.rows }));
       } else {
         res.end(JSON.stringify({ success: false, message: "Empty" }));
@@ -82,18 +131,34 @@ const getUserByPhone = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
     try {
-      let date = new Date();
-      let currentDate =
+      const date = new Date();
+      const currentDate =
         date.getFullYear() + "-0" + date.getMonth() + "-0" + date.getDate();
-      const { imei, userPhone, name, address, isCustomerYN } = req.body;
-      console.log(imei);
+      const { imei, userPhone, passWord, name, address, isCustomerYN } =
+        req.body;
+      console.log("Begin");
+       const passWordHash = crypto
+        .createHmac("sha256", keyHascode)
+        .update(passWord)
+        .digest("hex");
+      console.log(passWordHash);
+
       const response = await pool.query(
-        "Insert Into Users(Imei, UserPhone, Name, Address, IsCustomerYN, CreateDate) Values($1, $2, $3, $4, $5, $6)",
-        [imei, userPhone, name, address, isCustomerYN, currentDate]
+        "Insert Into Users(Imei, UserPhone, Password, Name, Address, IsCustomerYN, CreateDate) Values($1, $2, $3, $4, $5, $6, $7)",
+        [
+          imei,
+          userPhone,
+          passWordHash,
+          name,
+          address,
+          isCustomerYN,
+          currentDate,
+        ]
       );
       if (response.rows != null) {
         res.send(JSON.stringify({ success: true, message: "Success" }));
@@ -107,6 +172,7 @@ const createUser = async (req, res) => {
 
 // GET STORE
 const getStore = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -128,6 +194,7 @@ const getStore = async (req, res) => {
 
 // GET BACKGROUND
 const getBackground = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -150,6 +217,7 @@ const getBackground = async (req, res) => {
 
 // GET CATEGORY
 const getCategory = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -171,6 +239,7 @@ const getCategory = async (req, res) => {
 
 // GET FOOR BY CATEGORY
 const getFoodByCategory = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -194,6 +263,7 @@ const getFoodByCategory = async (req, res) => {
 
 // GET FAVORITE
 const getFavorite = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -214,6 +284,7 @@ const getFavorite = async (req, res) => {
 };
 
 const createFavorite = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -259,6 +330,7 @@ const createFavorite = async (req, res) => {
 };
 
 const deleteFavorite = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -288,6 +360,7 @@ const deleteFavorite = async (req, res) => {
 };
 
 const createOrder = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -313,6 +386,7 @@ const createOrder = async (req, res) => {
 };
 
 const createOrderDetail = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     console.log("Wrong API key");
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
@@ -375,6 +449,7 @@ const createOrderDetail = async (req, res) => {
 };
 
 const calculateOrderAmount = (items) => {
+  res.header("Access-Control-Allow-Origin", "*");
   var id;
   var amount;
   var item = JSON.parse(JSON.stringify(items));
@@ -386,6 +461,7 @@ const calculateOrderAmount = (items) => {
 };
 
 const createPaymentIntent = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   const { currency, items } = req.body;
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
@@ -398,6 +474,7 @@ const createPaymentIntent = async (req, res) => {
 };
 
 const cancelPaymentIntent = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
   const { id } = req.params;
   const paymentIntent = await stripe.paymentIntents.cancel(id);
   res.send({
@@ -433,4 +510,5 @@ module.exports = {
   cancelPaymentIntent,
   createFavorite,
   deleteFavorite,
+  encryptPass,
 };

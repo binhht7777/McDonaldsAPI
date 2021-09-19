@@ -17,6 +17,7 @@ const {
   cancelPaymentIntent,
   createFavorite,
   deleteFavorite,
+  encryptPass,
 } = require("../controllers/index.contronller");
 
 router.get("/users", getUsers);
@@ -40,6 +41,8 @@ router.post("/favorite", createFavorite);
 router.delete("/favorite", deleteFavorite);
 
 router.post("/createorder", createOrder);
+
+router.post("/encryptpass", encryptPass);
 
 router.post("/createorderdetail", createOrderDetail);
 
