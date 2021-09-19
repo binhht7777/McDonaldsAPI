@@ -18,6 +18,9 @@ const {
   createFavorite,
   deleteFavorite,
   encryptPass,
+  getAllFavorite,
+  getOrder,
+  updateOrder,
 } = require("../controllers/index.contronller");
 
 router.get("/users", getUsers);
@@ -36,9 +39,15 @@ router.get("/foodbycategory", getFoodByCategory);
 
 router.get("/favorite", getFavorite);
 
+router.get("/allfavorite", getAllFavorite);
+
 router.post("/favorite", createFavorite);
 
 router.delete("/favorite", deleteFavorite);
+
+router.get("/order", getOrder);
+
+router.put("/order", updateOrder);
 
 router.post("/createorder", createOrder);
 

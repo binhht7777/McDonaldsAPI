@@ -15,7 +15,9 @@ const pool = new Pool({
   trustedConnection: true,
 });
 
-var crypto = require("crypto"), algorithm = "sha-256-ctr", keyHascode = "d6F3Efeq";
+var crypto = require("crypto"),
+  algorithm = "sha-256-ctr",
+  keyHascode = "d6F3Efeq";
 
 function encrypt(text) {
   var cipher = crypto.createCipher(algorithm, password);
@@ -142,7 +144,7 @@ const createUser = async (req, res) => {
       const { imei, userPhone, passWord, name, address, isCustomerYN } =
         req.body;
       console.log("Begin");
-       const passWordHash = crypto
+      const passWordHash = crypto
         .createHmac("sha256", keyHascode)
         .update(passWord)
         .digest("hex");
@@ -283,6 +285,27 @@ const getFavorite = async (req, res) => {
   }
 };
 
+const getAllFavorite = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  if (req.query.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const response = await pool.query(
+        "Select f.FoodId, f.FoodName, f.FoodImg, f.Count From Favorite f "
+      );
+      if (response.rows.length > 0) {
+        res.end(JSON.stringify({ success: true, result: response.rows }));
+      } else {
+        res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
 const createFavorite = async (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
@@ -291,7 +314,6 @@ const createFavorite = async (req, res) => {
     try {
       const { foodId, foodName, foodImg, count } = req.body;
       var countFav = 0;
-
       // kiem tra xem co ton tai favorite khong
 
       const response = await pool.query(
@@ -299,10 +321,11 @@ const createFavorite = async (req, res) => {
         [foodId]
       );
       console.log(response.rows);
+
       if (response.rows != "") {
         console.log("2------------");
         if (parseInt(response.rows[0]["count"]) > 0) {
-          countFav = parseInt(response.rows[0]["count"]) + count;
+          countFav = parseInt(response.rows[0]["count"]) + parseInt(count);
           console.log(countFav);
           const response1 = await pool.query(
             "Update Favorite Set Count = $1 Where foodId = $2",
@@ -342,7 +365,7 @@ const deleteFavorite = async (req, res) => {
       );
       if (response.rows != null) {
         console.log(response.rows);
-        countFav = parseInt(response.rows[0]["count"]) - count;
+        countFav = parseInt(response.rows[0]["count"]) - parseInt(count);
       }
 
       const response1 = await pool.query(
@@ -350,6 +373,50 @@ const deleteFavorite = async (req, res) => {
         [countFav, foodId]
       );
       if (response1.rows != null) {
+        res.send(JSON.stringify({ success: true, message: "Success" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
+const getOrder = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  if (req.query.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      var orderId = req.query.orderId;
+      const response = await pool.query(
+        "Select OrderId, Imei, UserPhone, StoreId, cash, Total, Status, Checkout, Address, OrderDate From Orders Where OrderId = $1",
+        [orderId]
+      );
+      if (response.rows.length > 0) {
+        res.end(JSON.stringify({ success: true, result: response.rows }));
+      } else {
+        res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
+const updateOrder = async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  if (req.body.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const { orderId, status } = req.body;
+      const response = await pool.query(
+        "Update Orders Set Status = $1 Where OrderId = $2",
+        [status, orderId]
+      );
+      if (response.rows != null) {
         res.send(JSON.stringify({ success: true, message: "Success" }));
       }
     } catch (err) {
@@ -369,11 +436,31 @@ const createOrder = async (req, res) => {
       let currentDate =
         date.getFullYear() + "-0" + date.getMonth() + "-0" + date.getDate();
 
-      const { orderId, imei, userPhone, storedId, cash, total, address } =
-        req.body;
+      const {
+        orderId,
+        imei,
+        userPhone,
+        storedId,
+        cash,
+        total,
+        status,
+        checkout,
+        address,
+      } = req.body;
       const response = await pool.query(
-        "Insert Into Orders(OrderId, Imei, UserPhone, StoreId, cash, Total, Address, OrderDate) Values($1, $2, $3, $4, $5, $6, $7, $8)",
-        [orderId, imei, userPhone, storedId, cash, total, address, currentDate]
+        "Insert Into Orders(OrderId, Imei, UserPhone, StoreId, cash, Total, Status, Checkout, Address, OrderDate) Values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        [
+          orderId,
+          imei,
+          userPhone,
+          storedId,
+          cash,
+          total,
+          status,
+          checkout,
+          address,
+          currentDate,
+        ]
       );
       if (response.rows != null) {
         res.send(JSON.stringify({ success: true, message: "Success" }));
@@ -511,4 +598,7 @@ module.exports = {
   createFavorite,
   deleteFavorite,
   encryptPass,
+  getAllFavorite,
+  getOrder,
+  updateOrder,
 };
