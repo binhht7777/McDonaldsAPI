@@ -34,7 +34,6 @@ function decrypt(text) {
 }
 
 const encryptPass = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -59,7 +58,6 @@ const encryptPass = async (req, res) => {
 };
 
 const getUsers = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -80,7 +78,6 @@ const getUsers = async (req, res) => {
 };
 
 const getUserByImei = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -104,7 +101,6 @@ const getUserByImei = async (req, res) => {
 };
 
 const getUserByPhone = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -133,7 +129,6 @@ const getUserByPhone = async (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -174,7 +169,6 @@ const createUser = async (req, res) => {
 
 // GET STORE
 const getStore = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -196,7 +190,6 @@ const getStore = async (req, res) => {
 
 // GET BACKGROUND
 const getBackground = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -219,7 +212,6 @@ const getBackground = async (req, res) => {
 
 // GET CATEGORY
 const getCategory = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -241,7 +233,6 @@ const getCategory = async (req, res) => {
 
 // GET FOOR BY CATEGORY
 const getFoodByCategory = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -265,7 +256,6 @@ const getFoodByCategory = async (req, res) => {
 
 // GET FAVORITE
 const getFavorite = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -285,8 +275,27 @@ const getFavorite = async (req, res) => {
   }
 };
 
+const getAllFood = async (req, res) => {
+  if (req.query.key != API_KEY) {
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      const response = await pool.query(
+        "Select f.FoodId, f.FoodName, f.FoodImg, f.Price From Food f "
+      );
+      if (response.rows.length > 0) {
+        res.end(JSON.stringify({ success: true, result: response.rows }));
+      } else {
+        res.end(JSON.stringify({ success: false, message: "Empty" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: err.message }));
+    }
+  }
+};
+
 const getAllFavorite = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -307,7 +316,6 @@ const getAllFavorite = async (req, res) => {
 };
 
 const createFavorite = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -353,27 +361,30 @@ const createFavorite = async (req, res) => {
 };
 
 const deleteFavorite = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
     try {
       const { foodId, count } = req.body;
+      console.log(foodId);
+      var countFav = 0;
       const response = await pool.query(
         "Select f.Count From Favorite f Where f.FoodId = $1",
         [foodId]
       );
+      console.log(response.rows);
       if (response.rows != null) {
-        console.log(response.rows);
-        countFav = parseInt(response.rows[0]["count"]) - parseInt(count);
-      }
-
-      const response1 = await pool.query(
-        "Update Favorite Set Count = $1 Where foodId = $2",
-        [countFav, foodId]
-      );
-      if (response1.rows != null) {
-        res.send(JSON.stringify({ success: true, message: "Success" }));
+        if (parseInt(response.rows[0]["count"]) > 0) {
+          countFav = parseInt(response.rows[0]["count"]) - parseInt(count);
+          console.log(countFav);
+          const response1 = await pool.query(
+            "Update Favorite Set Count = $1 Where FoodId = $2",
+            [countFav, foodId]
+          );
+          if (response1.rows != null) {
+            res.send(JSON.stringify({ success: true, message: "Success" }));
+          }
+        }
       }
     } catch (err) {
       res.status(500);
@@ -383,18 +394,54 @@ const deleteFavorite = async (req, res) => {
 };
 
 const getOrder = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.query.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
     try {
-      var orderId = req.query.orderId;
+      var status = req.query.status;
       const response = await pool.query(
-        "Select OrderId, Imei, UserPhone, StoreId, cash, Total, Status, Checkout, Address, OrderDate From Orders Where OrderId = $1",
-        [orderId]
+        "Select OrderId, Imei, UserPhone, StoreId, cash, Total, Status, Checkout, Address, OrderDate From Orders Where Status = $1",
+        [status]
       );
       if (response.rows.length > 0) {
-        res.end(JSON.stringify({ success: true, result: response.rows }));
+        var orderId;
+        var options;
+        var foodNameStr;
+        var arrOrder = [];
+        var arrFoodName = [];
+        var i, j;
+        for (i = 0; i < response.rows.length; i++) {
+          orderId = response.rows[i]["orderid"];
+          console.log(response.rows);
+          // arrOrder.push(response.rows[i]);
+
+          const response1 = await pool.query(
+            "Select (Select f.FoodName From Food f Where f.FoodId = d.FoodId) FoodName From OrdersDetail d Where d.OrderId = $1",
+            [orderId]
+          );
+          foodNameStr = "";
+          for (j = 0; j < response1.rows.length; j++) {
+            if (response1.rows.length > 0) {
+              foodNameStr += response1.rows[j]["foodname"] + "; ";
+            }
+          }
+          // arrOrder.push({foodName: [foodNameStr]});
+
+          arrOrder.push({
+            orderId: response.rows[i]["orderid"],
+            imei: response.rows[i]["imei"],
+            userPhone: response.rows[i]["userphone"],
+            storeId: response.rows[i]["storeid"],
+            cash: response.rows[i]["cash"],
+            status: response.rows[i]["status"],
+            checkout: response.rows[i]["checkout"],
+            address: response.rows[i]["address"],
+            orderDate: response.rows[i]["orderdate"],
+            foodName: foodNameStr,
+          });
+        }
+
+        res.end(JSON.stringify({ success: true, result: arrOrder }));
       } else {
         res.end(JSON.stringify({ success: false, message: "Empty" }));
       }
@@ -406,7 +453,6 @@ const getOrder = async (req, res) => {
 };
 
 const updateOrder = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -427,7 +473,6 @@ const updateOrder = async (req, res) => {
 };
 
 const createOrder = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
   } else {
@@ -473,7 +518,6 @@ const createOrder = async (req, res) => {
 };
 
 const createOrderDetail = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
   if (req.body.key != API_KEY) {
     console.log("Wrong API key");
     res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
@@ -490,7 +534,6 @@ const createOrderDetail = async (req, res) => {
       var foodPrice;
       var foodQuantity;
       var total;
-      var orderId;
       try {
         order_detail = JSON.parse(req.body.orderDetail);
         orderId = req.body.orderId;
@@ -535,8 +578,94 @@ const createOrderDetail = async (req, res) => {
   }
 };
 
+const createOrderAll = async (req, res) => {
+  if (req.body.key != API_KEY) {
+    console.log("Wrong API key");
+    res.end(JSON.stringify({ success: false, message: "Wrong API Key" }));
+  } else {
+    try {
+      let orderDetailId = "";
+      let date = new Date();
+      let currentDate =
+        date.getFullYear() + "-0" + date.getMonth() + "-0" + date.getDate();
+      var order_detail;
+      var categoryId;
+      var foodId;
+      var foodPrice;
+      var foodQuantity;
+      var totalRecord;
+      const {
+        orderId,
+        imei,
+        userPhone,
+        storedId,
+        cash,
+        total,
+        status,
+        checkout,
+        address,
+      } = req.body;
+      try {
+        order_detail = JSON.parse(JSON.stringify(req.body.orderDetail));
+      } catch (err) {
+        res.status(500);
+        res.send(JSON.stringify({ success: false, message: "Sai bien" }));
+      }
+      console.log("begin insert" + orderId);
+      const response = await pool.query(
+        "Insert Into Orders(OrderId, Imei, UserPhone, StoreId, cash, Total, Status, Checkout, Address, OrderDate) Values($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        [
+          orderId,
+          imei,
+          userPhone,
+          storedId,
+          cash,
+          total,
+          status,
+          checkout,
+          address,
+          currentDate,
+        ]
+      );
+      console.log(response.rows);
+      var dong = 0;
+
+      for (var i = 0; i < order_detail.length; i++) {
+        orderDetailId = order_detail[i]["orderDetailId"];
+        categoryId = order_detail[i]["categoryId"];
+        foodId = order_detail[i]["foodId"];
+        foodPrice = parseFloat(order_detail[i]["foodPrice"]);
+        foodQuantity = parseInt(order_detail[i]["foodQuantity"]);
+        totalRecord = foodPrice * foodQuantity;
+        console.log("orderId " + order_detail.length);
+        const responseDetail = await pool.query(
+          "Insert Into OrdersDetail(OrderDetailId, OrderId, CategoryId, FoodId, Price, quanlity, total, OrderDate) Values($1, $2, $3, $4, $5, $6, $7, $8)",
+          [
+            orderDetailId,
+            orderId,
+            categoryId,
+            foodId,
+            foodPrice,
+            foodQuantity,
+            totalRecord,
+            currentDate,
+          ]
+        );
+        console.log("finish");
+        console.log(responseDetail.rows);
+        dong += 1;
+      }
+      if (dong > 0) {
+        res.send(JSON.stringify({ success: true, message: "Success" }));
+      }
+    } catch (err) {
+      res.status(500);
+      res.end(JSON.stringify({ success: false, message: "xay ra loi" }));
+    }
+  }
+};
+
 const calculateOrderAmount = (items) => {
-  res.header("Access-Control-Allow-Origin", "*");
   var id;
   var amount;
   var item = JSON.parse(JSON.stringify(items));
@@ -548,22 +677,21 @@ const calculateOrderAmount = (items) => {
 };
 
 const createPaymentIntent = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  const { currency, items } = req.body;
+  const { currency, amount } = req.body;
   // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: calculateOrderAmount(items),
+    amount: amount,
     currency: currency,
   });
+
   res.send({
     clientSecret: paymentIntent.client_secret,
   });
 };
 
 const cancelPaymentIntent = async (req, res) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  const { id } = req.params;
-  const paymentIntent = await stripe.paymentIntents.cancel(id);
+  const { items } = req.params;
+  const paymentIntent = (await stripe.p) + aymentIntents.cancel(items);
   res.send({
     clientSecret: paymentIntent.client_secret,
   });
@@ -574,7 +702,7 @@ const cancelPaymentIntent = async (req, res) => {
 //   // Create a PaymentIntent with the order amount and currency
 //   const paymentIntent = await stripe.paymentIntents.create({
 //     amount: calculateOrderAmount(items),
-//     currency: "usd",
+//     currency: "VND",
 //   });
 //   res.send({
 //     clientSecret: paymentIntent.client_secret,
@@ -601,4 +729,6 @@ module.exports = {
   getAllFavorite,
   getOrder,
   updateOrder,
+  getAllFood,
+  createOrderAll,
 };

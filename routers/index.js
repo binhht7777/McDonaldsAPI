@@ -21,6 +21,8 @@ const {
   getAllFavorite,
   getOrder,
   updateOrder,
+  getAllFood,
+  createOrderAll,
 } = require("../controllers/index.contronller");
 
 router.get("/users", getUsers);
@@ -41,13 +43,17 @@ router.get("/favorite", getFavorite);
 
 router.get("/allfavorite", getAllFavorite);
 
+router.get("/allfood", getAllFood);
+
 router.post("/favorite", createFavorite);
 
-router.delete("/favorite", deleteFavorite);
+router.post("/favorite", deleteFavorite);
 
 router.get("/order", getOrder);
 
 router.put("/order", updateOrder);
+
+router.post("/order", createOrderAll);
 
 router.post("/createorder", createOrder);
 
